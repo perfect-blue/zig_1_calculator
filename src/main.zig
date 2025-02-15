@@ -1,24 +1,51 @@
 const std = @import("std");
+const testing = std.testing;
 
 pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+    var result = Calculator{
+        .total = 0,
+    };
 
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
-
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
-
-    try bw.flush(); // don't forget to flush!
+    std.debug.print("result: {!}\n", .{result.total});
+    calculate(&result, ArithmeticOperation.add, 10);
+    calculate(&result, ArithmeticOperation.substract, 4);
+    calculate(&result, ArithmeticOperation.divide, 3);
+    calculate(&result, ArithmeticOperation.multiply, 4);
+    std.debug.print("result: {!}\n", .{result.total});
 }
 
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
+pub const Calculator = struct {
+    total: u64,
+};
+
+const ArithmeticOperation = enum {
+    add,
+    substract,
+    multiply,
+    divide,
+};
+
+fn calculate(calculator: *Calculator, operation: ArithmeticOperation, a: u64) void {
+    calculator.total = switch (operation) {
+        .add => calculator.total + a,
+        .substract => calculator.total - a,
+        .multiply => calculator.total * a,
+        .divide => calculator.total / a,
+    };
+}
+
+test "calculate" {
+    var calc = Calculator{ .total = 10 };
+
+    calculate(&calc, .add, 5);
+    try testing.expectEqual(@as(u64, 15), calc.total);
+
+    calculate(&calc, .substract, 3);
+    try testing.expectEqual(@as(u64, 12), calc.total);
+
+    calculate(&calc, .multiply, 2);
+    try testing.expectEqual(@as(u64, 24), calc.total);
+
+    calculate(&calc, .divide, 4);
+    try testing.expectEqual(@as(u64, 6), calc.total);
 }
